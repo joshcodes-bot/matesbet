@@ -11,6 +11,7 @@ const NAV = [
   { href: '/create', icon: '➕', label: 'Create Market' },
   { href: '/my-bets', icon: '🎟', label: 'My Bets' },
   { href: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
+  { href: '/settlements', icon: '🤝', label: 'Settlements' },
 ]
 
 export default function NavSidebar({ profile }: { profile: Profile | null }) {
