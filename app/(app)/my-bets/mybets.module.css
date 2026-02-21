@@ -1,0 +1,76 @@
+.wrap { position: relative; z-index: 1; max-width: 700px; }
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 1.5px;
+  margin-bottom: 24px;
+}
+
+.statsRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 100px;
+}
+
+.statLabel { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+.statValue { font-family: var(--font-mono); font-size: 18px; font-weight: 500; }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+
+.betRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  transition: border-color 0.15s;
+  animation: fadeUp 0.35s ease both;
+}
+
+.betRow:hover { border-color: rgba(240,224,64,0.2); }
+
+.betIcon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.icon_pending { background: rgba(240,224,64,0.1); }
+.icon_won { background: rgba(61,255,160,0.1); }
+.icon_lost { background: rgba(255,79,79,0.1); }
+
+.betInfo { flex: 1; min-width: 0; }
+.betMarket { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.betOption { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.betMeta { font-size: 11px; color: var(--muted); font-family: var(--font-mono); margin-top: 3px; }
+
+.betAmounts { text-align: right; flex-shrink: 0; }
+.betStake { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.betPayout { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+
+.payout_pending { color: var(--accent); }
+.payout_won { color: var(--green); }
+.payout_lost { color: var(--red); }
+
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+}
+.emptyIcon { font-size: 52px; margin-bottom: 16px; opacity: 0.4; }
+.emptyTitle { font-family: var(--font-display); font-size: 26px; color: var(--text); margin-bottom: 8px; }
