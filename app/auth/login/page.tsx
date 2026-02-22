@@ -34,7 +34,7 @@ export default function LoginPage() {
     <div className={styles.authWrap}>
       <div className={styles.authBg} />
       <div className={styles.authCard}>
-        <div className={styles.logo}>Mates<span>Bet</span></div>
+        <img src="/logo.png" alt="MatesBet" height={48} style={{ display: 'block', marginBottom: '8px' }} />
         <p className={styles.tagline}>Bet on anything with your crew</p>
 
         <form onSubmit={handleLogin} className={styles.form}>
