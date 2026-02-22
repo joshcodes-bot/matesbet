@@ -66,7 +66,7 @@ export default function SignupPage() {
     <div className={styles.authWrap}>
       <div className={styles.authBg} />
       <div className={styles.authCard}>
-        <div className={styles.logo}>Mates<span>Bet</span></div>
+        <img src="/logo.png" alt="MatesBet" height={48} style={{ display: 'block', marginBottom: '8px' }} />
         <p className={styles.tagline}>Join your crew. Start betting.</p>
 
         <form onSubmit={handleSignup} className={styles.form}>
