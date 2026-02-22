@@ -8,6 +8,7 @@ import styles from './NavSidebar.module.css'
 
 const NAV = [
   { href: '/markets',     icon: '🏠', label: 'Home' },
+  { href: '/groups',      icon: '👥', label: 'My Groups' },
   { href: '/create',      icon: '➕', label: 'Create Market' },
   { href: '/my-bets',     icon: '🎟', label: 'My Bets' },
   { href: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
@@ -40,8 +41,20 @@ export default function NavSidebar({ profile }: { profile: Profile | null }) {
 
         {/* Logo */}
         <Link href="/markets" className={styles.logo}>
-  <img src="/logo.png" alt="MatesBet" height={36} style={{ display: 'block' }} />
-</Link>
+          <div className={styles.logoMark}>
+            <svg viewBox="0 0 36 36" width="26" height="26" fill="none">
+              <rect width="36" height="36" rx="9" fill="#0f0f1e"/>
+              <rect x="4"  y="22" width="5" height="10" rx="1.5" fill="#252540"/>
+              <rect x="12" y="16" width="5" height="16" rx="1.5" fill="#2e2e50"/>
+              <rect x="20" y="9"  width="5" height="23" rx="1.5" fill="#f0e040" opacity="0.85"/>
+              <rect x="28" y="3"  width="5" height="29" rx="1.5" fill="#f0e040"/>
+              <polyline points="6.5,23 14.5,17 22.5,10 30.5,4"
+                stroke="#40e0f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="30.5" cy="4" r="2.2" fill="#40e0f0"/>
+            </svg>
+          </div>
+          <span className={styles.logoText}>mates<span>bet</span></span>
+        </Link>
 
         {/* Profile */}
         {profile && (
