@@ -4,6 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'MatesBet',
   description: 'Bet on anything with your mates. Real parimutuel odds from the pool.',
+  icons: { icon: '/favicon.ico' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -12,9 +13,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>{children}</body>
     </html>
   )
-  export const metadata: Metadata = {
-  title: 'MatesBet',
-  description: '...',
-  icons: { icon: '/favicon.ico' },
-}
 }
