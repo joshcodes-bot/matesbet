@@ -8,15 +8,9 @@ import { calcOdds, calcEstimatedPayout } from '@/lib/types'
 import type { Market, Profile } from '@/lib/types'
 import styles from './group.module.css'
 
-interface Member {
-  user_id: string
-  joined_at: string
-  profiles: { username: string; balance: number; total_won: number; total_staked: number } | null
-}
-
 interface Props {
   group: { id: string; name: string; description: string; invite_code: string; created_by: string }
-  members: Member[]
+  members: any[]
   markets: Market[]
   profile: Profile | null
   userId: string
