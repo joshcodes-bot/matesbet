@@ -40,7 +40,7 @@ export default function NavSidebar({ profile }: { profile: Profile | null }) {
 
         {/* Logo */}
         <Link href="/markets" className={styles.logo}>
-  <img src="/logo.png" alt="MatesBet" height={36} style={{ display: 'block' }} />
+  <img src="/logo.png" alt="MatesBet" height={52} style={{ display: 'block' }} />
 </Link>
 
         {/* Profile */}
