@@ -1,0 +1,137 @@
+.wrap { position: relative; z-index: 1; max-width: 900px; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+}
+
+.title {
+  font-family: 'Arial Black', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  color: #eaeaf2;
+  margin-bottom: 4px;
+}
+
+.subtitle { color: #4a4a65; font-size: 13px; }
+
+.createBtn {
+  background: #f0e040;
+  color: #0a0a0f;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.createBtn:hover { background: #fff176; box-shadow: 0 4px 20px rgba(240,224,64,0.3); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: #10101c;
+  border: 1px solid #1c1c2e;
+  border-radius: 14px;
+  padding: 18px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+  animation: fadeUp 0.3s ease both;
+}
+
+.card:hover {
+  border-color: rgba(240,224,64,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cardTop { display: flex; align-items: flex-start; gap: 12px; }
+
+.cardIcon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: #1a1a2e;
+  border: 1px solid #242440;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.cardInfo { flex: 1; min-width: 0; }
+.cardName { font-size: 16px; font-weight: 700; color: #eaeaf2; margin-bottom: 3px; }
+.cardDesc { font-size: 12px; color: #4a4a65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ownerBadge {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(240,224,64,0.1);
+  color: #f0e040;
+  border: 1px solid rgba(240,224,64,0.2);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.cardStats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #0c0c18;
+  border: 1px solid #16162a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cardStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px;
+  gap: 2px;
+}
+
+.cardStatDivider { width: 1px; height: 32px; background: #16162a; flex-shrink: 0; }
+.cardStatVal { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: #eaeaf2; }
+.cardStatCode { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: #f0e040; letter-spacing: 1px; }
+.cardStatLabel { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #3a3a55; font-weight: 600; }
+
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #4a4a65;
+}
+
+.emptyIcon { font-size: 52px; margin-bottom: 14px; opacity: 0.4; }
+.emptyTitle { font-family: 'Arial Black', sans-serif; font-size: 24px; color: #8080a0; margin-bottom: 8px; }
+.emptyBtn {
+  display: inline-block;
+  margin-top: 20px;
+  background: #f0e040;
+  color: #0a0a0f;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+}
