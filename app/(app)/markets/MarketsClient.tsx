@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Market, Profile } from '@/lib/types'
@@ -15,30 +15,24 @@ interface Props {
 
 export default function MarketsClient({ markets: initial, profile, userId }: Props) {
   const [markets, setMarkets] = useState<Market[]>(initial)
+  const [userProfile, setUserProfile] = useState(profile)
   const [betModal, setBetModal] = useState<{ market: Market; optionIdx: number } | null>(null)
   const [betAmount, setBetAmount] = useState('')
   const [betLoading, setBetLoading] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
-  const [userProfile, setUserProfile] = useState(profile)
+  const [filter, setFilter] = useState<string>('all')
   const router = useRouter()
   const supabase = createClient()
 
-  // Realtime subscription
   useEffect(() => {
     const channel = supabase
-      .channel('markets-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'markets' }, () => {
-        router.refresh()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'market_options' }, () => {
-        router.refresh()
-      })
+      .channel('markets-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'markets' }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'market_options' }, () => router.refresh())
       .subscribe()
-
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // Keep local markets in sync with server refreshes
   useEffect(() => { setMarkets(initial) }, [initial])
   useEffect(() => { setUserProfile(profile) }, [profile])
 
@@ -52,9 +46,8 @@ export default function MarketsClient({ markets: initial, profile, userId }: Pro
     const stake = parseFloat(betAmount)
     if (!stake || stake <= 0) return showToast('Enter a valid stake', 'error')
     if (userProfile && userProfile.balance < stake) {
-      return showToast(`Not enough balance — you have $${userProfile.balance.toFixed(2)}`, 'error')
+      return showToast(`Not enough balance — you have $${Number(userProfile.balance).toFixed(2)}`, 'error')
     }
-
     setBetLoading(true)
     const { data, error } = await supabase.rpc('place_bet', {
       p_market_id: betModal.market.id,
@@ -63,15 +56,14 @@ export default function MarketsClient({ markets: initial, profile, userId }: Pro
       p_username: userProfile?.username ?? 'Unknown',
       p_stake: stake,
     })
-
     setBetLoading(false)
-
     if (error || data?.error) {
       showToast(data?.error ?? error?.message ?? 'Something went wrong', 'error')
     } else {
+      const optLabel = betModal.market.market_options?.find(o => o.option_idx === betModal.optionIdx)?.label
       setBetModal(null)
       setBetAmount('')
-      showToast(`Bet placed! $${stake} on "${betModal.market.market_options?.find(o => o.option_idx === betModal.optionIdx)?.label}" 🎟`, 'success')
+      showToast(`Bet placed! $${stake} on "${optLabel}" 🎟`, 'success')
       router.refresh()
     }
   }
@@ -96,115 +88,170 @@ export default function MarketsClient({ markets: initial, profile, userId }: Pro
     }
   }
 
-  const openBet = (market: Market, optionIdx: number) => {
-    if (market.status !== 'open') return
-    setBetModal({ market, optionIdx })
-    setBetAmount('')
-  }
+  const filteredMarkets = filter === 'all'
+    ? markets
+    : markets.filter(m => m.emoji === { sport: '⚽', gaming: '🎮', racing: '🏁', social: '🍺', finance: '💰', general: '🎲' }[filter])
 
-  const estimatedPayout = betModal && betAmount
+  const openCount   = markets.filter(m => m.status === 'open').length
+  const totalPool   = markets.reduce((s, m) => s + Number(m.total_pool), 0)
+  const betOption   = betModal?.market.market_options?.find(o => o.option_idx === betModal.optionIdx)
+  const estPayout   = betModal && betAmount
     ? calcEstimatedPayout(betModal.market, betModal.optionIdx, parseFloat(betAmount) || 0)
     : 0
 
-  const betOption = betModal?.market.market_options?.find(o => o.option_idx === betModal.optionIdx)
+  const FILTERS = [
+    { key: 'all',     label: 'All' },
+    { key: 'sport',   label: '⚽ Sport' },
+    { key: 'gaming',  label: '🎮 Gaming' },
+    { key: 'racing',  label: '🏁 Racing' },
+    { key: 'social',  label: '🍺 Social' },
+    { key: 'finance', label: '💰 Finance' },
+    { key: 'general', label: '🎲 General' },
+  ]
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>MARKETS</h1>
-          <p className={styles.pageSubtitle}>Live odds update as bets come in</p>
+
+      {/* ── TOP HEADER ── */}
+      <div className={styles.topHeader}>
+        <div className={styles.topHeaderLeft}>
+          <h1 className={styles.pageTitle}>Markets</h1>
+          <div className={styles.headerStats}>
+            <div className={styles.headerStat}>
+              <span className={styles.headerStatVal}>{openCount}</span>
+              <span className={styles.headerStatLabel}>Live</span>
+            </div>
+            <div className={styles.headerStatDivider}/>
+            <div className={styles.headerStat}>
+              <span className={styles.headerStatVal}>${totalPool.toFixed(0)}</span>
+              <span className={styles.headerStatLabel}>Total Pool</span>
+            </div>
+            <div className={styles.headerStatDivider}/>
+            <div className={styles.headerStat}>
+              <span className={styles.headerStatVal}>{markets.length}</span>
+              <span className={styles.headerStatLabel}>Markets</span>
+            </div>
+          </div>
         </div>
         {userProfile && (
-          <div className={styles.balancePill}>
-            Balance: <strong>${userProfile.balance.toFixed(2)}</strong>
+          <div className={styles.balanceChip}>
+            <div className={styles.balanceChipLabel}>BALANCE</div>
+            <div className={styles.balanceChipVal}>${Number(userProfile.balance).toFixed(2)}</div>
           </div>
         )}
       </div>
 
-      {markets.length === 0 ? (
+      {/* ── CATEGORY FILTER STRIP ── */}
+      <div className={styles.filterStrip}>
+        {FILTERS.map(f => (
+          <button
+            key={f.key}
+            className={`${styles.filterBtn} ${filter === f.key ? styles.filterBtnActive : ''}`}
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── MARKETS ── */}
+      {filteredMarkets.length === 0 ? (
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>🎯</div>
           <div className={styles.emptyTitle}>No Markets Yet</div>
-          <p>Create the first one and get your mates betting!</p>
+          <p>Create the first one!</p>
         </div>
       ) : (
         <div className={styles.grid}>
-          {markets.map((market, mi) => {
-            const odds = calcOdds(market)
+          {filteredMarkets.map((market, mi) => {
+            const odds    = calcOdds(market)
             const isCreator = market.created_by === userId
             const options = [...(market.market_options ?? [])].sort((a, b) => a.option_idx - b.option_idx)
+            const isOpen  = market.status === 'open'
+            const isResolved = market.winner_option_idx !== null
+
+            const statusText  = isResolved ? 'RESOLVED' : market.status.toUpperCase()
+            const statusClass = isResolved ? styles.statusResolved
+                              : market.status === 'open' ? styles.statusOpen
+                              : styles.statusClosed
 
             return (
-              <div key={market.id} className={styles.card} style={{ animationDelay: `${mi * 0.06}s` }}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <div className={styles.cardEmoji}>{market.emoji}</div>
-                    <div className={styles.cardTitle}>{market.question}</div>
-                  </div>
-                  <div className={`${styles.status} ${styles[`status_${market.winner_option_idx !== null ? 'resolved' : market.status}`]}`}>
-                    {market.winner_option_idx !== null ? 'RESOLVED' : market.status.toUpperCase()}
-                  </div>
-                </div>
+              <div key={market.id} className={styles.card} style={{ animationDelay: `${mi * 0.05}s` }}>
 
-                <div className={styles.cardMeta}>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Pool</span>
-                    <span className={styles.metaValue}>${market.total_pool.toFixed(0)}</span>
-                  </div>
-                  {market.closes_at && (
-                    <div className={styles.metaItem}>
-                      <span className={styles.metaLabel}>Closes</span>
-                      <span className={styles.metaValue}>{new Date(market.closes_at).toLocaleDateString()}</span>
+                {/* Card header */}
+                <div className={styles.cardHead}>
+                  <div className={styles.cardHeadLeft}>
+                    <span className={styles.cardEmoji}>{market.emoji}</span>
+                    <div>
+                      <div className={styles.cardCreator}>by {market.created_by_username}</div>
+                      <div className={styles.cardTitle}>{market.question}</div>
                     </div>
-                  )}
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>By</span>
-                    <span className={`${styles.metaValue} ${styles.metaCreator}`}>{market.created_by_username}</span>
+                  </div>
+                  <div className={styles.cardHeadRight}>
+                    <div className={`${styles.statusPill} ${statusClass}`}>{statusText}</div>
+                    {market.closes_at && isOpen && (
+                      <div className={styles.closesAt}>
+                        Closes {new Date(market.closes_at).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className={styles.options}>
-                  {options.map((opt, i) => {
+                {/* Pool bar */}
+                <div className={styles.poolBar}>
+                  <span className={styles.poolLabel}>POOL</span>
+                  <span className={styles.poolVal}>${Number(market.total_pool).toFixed(0)}</span>
+                  <span className={styles.poolBets}>
+                    {options.reduce((s, o) => s, 0)} bets
+                  </span>
+                </div>
+
+                {/* Options / odds buttons */}
+                <div className={styles.optionsGrid}>
+                  {options.map((opt) => {
                     const o = odds[opt.option_idx] ?? { oddsDisplay: '—', pct: 0 }
                     const isWinner = market.winner_option_idx === opt.option_idx
-                    const barColors = ['var(--accent)', 'var(--accent2)', '#a78bfa', '#fb923c', '#f472b6']
-                    const barColor = isWinner ? 'var(--green)' : barColors[i % barColors.length]
+                    const isLoser  = isResolved && !isWinner
 
                     return (
-                      <div
+                      <button
                         key={opt.id}
-                        className={`${styles.optionRow} ${market.status === 'open' ? styles.clickable : ''} ${isWinner ? styles.winner : ''}`}
-                        onClick={() => market.status === 'open' && openBet(market, opt.option_idx)}
+                        className={`${styles.oddsBtn}
+                          ${isWinner ? styles.oddsBtnWinner : ''}
+                          ${isLoser  ? styles.oddsBtnLoser  : ''}
+                          ${isOpen   ? styles.oddsBtnClickable : ''}
+                        `}
+                        onClick={() => isOpen && setBetModal({ market, optionIdx: opt.option_idx }) && setBetAmount('')}
+                        disabled={!isOpen}
                       >
-                        <div className={styles.optionMain}>
-                          <span className={styles.optionLabel}>{opt.label}{isWinner ? ' 🏆' : ''}</span>
-                          <span className={styles.optionOdds}>{o.oddsDisplay}</span>
+                        <span className={styles.oddsBtnLabel}>
+                          {isWinner ? '🏆 ' : ''}{opt.label}
+                        </span>
+                        <span className={styles.oddsBtnOdds}>{o.oddsDisplay}</span>
+                        <div className={styles.oddsBtnBar}>
+                          <div
+                            className={styles.oddsBtnBarFill}
+                            style={{ width: `${o.pct}%` }}
+                          />
                         </div>
-                        <div className={styles.optionBar}>
-                          <div className={styles.optionBarTrack}>
-                            <div className={styles.optionBarFill} style={{ width: `${o.pct}%`, background: barColor }} />
-                          </div>
-                          <span className={styles.optionPct}>{o.pct}%</span>
-                          <span className={styles.optionPool}>${opt.pool.toFixed(0)}</span>
-                        </div>
-                      </div>
+                        <span className={styles.oddsBtnPct}>{o.pct}%</span>
+                      </button>
                     )
                   })}
                 </div>
 
                 {/* Creator controls */}
-                {isCreator && market.status === 'open' && (
-                  <div className={styles.creatorBar}>
-                    <button className={styles.btnClose} onClick={() => handleClose(market.id)}>
+                {isCreator && isOpen && (
+                  <div className={styles.creatorRow}>
+                    <button className={styles.closeBtn} onClick={() => handleClose(market.id)}>
                       🔒 Close Betting
                     </button>
                   </div>
                 )}
 
-                {isCreator && market.status === 'closed' && market.winner_option_idx === null && (
-                  <div className={styles.resolveBar}>
-                    <div className={styles.resolveLabel}>Pick the winner:</div>
+                {isCreator && market.status === 'closed' && !isResolved && (
+                  <div className={styles.resolveRow}>
+                    <span className={styles.resolveLabel}>Declare winner:</span>
                     <div className={styles.resolveBtns}>
                       {options.map(opt => (
                         <button
@@ -224,77 +271,103 @@ export default function MarketsClient({ markets: initial, profile, userId }: Pro
         </div>
       )}
 
-      {/* Bet Modal */}
+      {/* ── BET MODAL ── */}
       {betModal && (
-        <div className={styles.modalBackdrop} onClick={() => setBetModal(null)}>
+        <div className={styles.backdrop} onClick={() => setBetModal(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div className={styles.modalTitle}>PLACE BET</div>
-              <button className={styles.modalClose} onClick={() => setBetModal(null)}>×</button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.modalMarket}>{betModal.market.question}</div>
-              <div className={styles.modalOption}>{betOption?.label}</div>
 
-              <div className={styles.formGroup}>
-                <label>Stake Amount ($)</label>
+            {/* Modal header */}
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalMarket}>{betModal.market.question}</div>
+                <div className={styles.modalOption}>{betOption?.label}</div>
+              </div>
+              <button className={styles.modalClose} onClick={() => setBetModal(null)}>✕</button>
+            </div>
+
+            {/* Current odds display */}
+            <div className={styles.modalOddsDisplay}>
+              <div className={styles.modalOddsItem}>
+                <span className={styles.modalOddsLabel}>Current odds</span>
+                <span className={styles.modalOddsVal}>
+                  {betOption
+                    ? (Number(betModal.market.total_pool) / Number(betOption.pool || 1)).toFixed(2) + 'x'
+                    : '—'}
+                </span>
+              </div>
+              <div className={styles.modalOddsItem}>
+                <span className={styles.modalOddsLabel}>Pool share</span>
+                <span className={styles.modalOddsVal}>
+                  {betOption && Number(betModal.market.total_pool) > 0
+                    ? Math.round((Number(betOption.pool) / Number(betModal.market.total_pool)) * 100) + '%'
+                    : '—'}
+                </span>
+              </div>
+              <div className={styles.modalOddsItem}>
+                <span className={styles.modalOddsLabel}>Total pool</span>
+                <span className={styles.modalOddsVal}>${Number(betModal.market.total_pool).toFixed(0)}</span>
+              </div>
+            </div>
+
+            {/* Stake input */}
+            <div className={styles.modalStakeWrap}>
+              <div className={styles.modalStakeLabel}>STAKE</div>
+              <div className={styles.modalStakeInput}>
+                <span className={styles.modalStakeCurrency}>$</span>
                 <input
                   type="number"
                   min="1"
-                  placeholder="0"
+                  placeholder="0.00"
                   value={betAmount}
                   onChange={e => setBetAmount(e.target.value)}
                   autoFocus
+                  className={styles.modalStakeField}
                 />
-                <div className={styles.presets}>
-                  {[5, 10, 25, 50, 100].map(n => (
-                    <button key={n} className={styles.presetBtn} onClick={() => setBetAmount(String(n))}>
-                      ${n}
-                    </button>
-                  ))}
+              </div>
+              <div className={styles.presets}>
+                {[5, 10, 25, 50, 100].map(n => (
+                  <button key={n} className={styles.presetBtn} onClick={() => setBetAmount(String(n))}>
+                    ${n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Payout estimate */}
+            {betAmount && parseFloat(betAmount) > 0 && (
+              <div className={styles.payoutRow}>
+                <div className={styles.payoutItem}>
+                  <span className={styles.payoutLabel}>Stake</span>
+                  <span className={styles.payoutVal}>${parseFloat(betAmount).toFixed(2)}</span>
+                </div>
+                <div className={styles.payoutArrow}>→</div>
+                <div className={styles.payoutItem}>
+                  <span className={styles.payoutLabel}>Est. Return</span>
+                  <span className={`${styles.payoutVal} ${styles.payoutGreen}`}>${estPayout.toFixed(2)}</span>
                 </div>
               </div>
+            )}
 
-              {betAmount && parseFloat(betAmount) > 0 && (
-                <div className={styles.betSummary}>
-                  <div className={styles.summaryRow}>
-                    <span>Your Stake</span>
-                    <span className={styles.summaryMono}>${parseFloat(betAmount).toFixed(2)}</span>
-                  </div>
-                  <div className={styles.summaryRow}>
-                    <span>Est. Odds</span>
-                    <span className={styles.summaryMono}>
-                      {betOption
-                        ? ((betModal.market.total_pool + parseFloat(betAmount)) / (betOption.pool + parseFloat(betAmount))).toFixed(2) + 'x'
-                        : '—'}
-                    </span>
-                  </div>
-                  <hr className={styles.summaryDivider} />
-                  <div className={`${styles.summaryRow} ${styles.summaryHighlight}`}>
-                    <span>Est. Payout</span>
-                    <span className={styles.summaryMono}>${estimatedPayout.toFixed(2)}</span>
-                  </div>
-                  <p className={styles.summaryNote}>* Final payout depends on total pool at close</p>
-                </div>
-              )}
+            <p className={styles.modalNote}>
+              * Parimutuel odds — final payout depends on total pool at close
+            </p>
 
-              <button
-                className={styles.btnConfirm}
-                onClick={handleBet}
-                disabled={betLoading || !betAmount || parseFloat(betAmount) <= 0}
-              >
-                {betLoading ? 'Placing…' : 'Confirm Bet →'}
-              </button>
-            </div>
+            <button
+              className={styles.confirmBtn}
+              onClick={handleBet}
+              disabled={betLoading || !betAmount || parseFloat(betAmount) <= 0}
+            >
+              {betLoading ? 'Placing Bet…' : `Place Bet →`}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Toast */}
+      {/* ── TOAST ── */}
       {toast && (
         <div className={`${styles.toast} ${styles[`toast_${toast.type}`]}`}>
-          <span>{toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}</span>
-          <span>{toast.msg}</span>
+          {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}
+          {toast.msg}
         </div>
       )}
     </div>
