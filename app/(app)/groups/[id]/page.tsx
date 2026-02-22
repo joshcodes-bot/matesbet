@@ -8,7 +8,6 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Get group
   const { data: group } = await supabase
     .from('groups')
     .select('*')
@@ -17,7 +16,6 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
 
   if (!group) return notFound()
 
-  // Check membership
   const { data: membership } = await supabase
     .from('group_members')
     .select('id')
@@ -27,26 +25,18 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
 
   if (!membership) return notFound()
 
-  // Get members
   const { data: membersRaw } = await supabase
-  .from('group_members')
-  .select('user_id, joined_at, profiles(username, balance, total_won, total_staked)')
-  .eq('group_id', params.id)
-  .order('joined_at', { ascending: true })
+    .from('group_members')
+    .select('user_id, joined_at, profiles(username, balance, total_won, total_staked)')
+    .eq('group_id', params.id)
+    .order('joined_at', { ascending: true })
 
-const members = (membersRaw ?? []).map(m => ({
-  ...m,
-  profiles: Array.isArray(m.profiles) ? m.profiles[0] ?? null : m.profiles as any
-}))
-
-  // Get markets for this group
   const { data: markets } = await supabase
     .from('markets')
     .select('*, market_options(*)')
     .eq('group_id', params.id)
     .order('created_at', { ascending: false })
 
-  // Get user profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -56,7 +46,7 @@ const members = (membersRaw ?? []).map(m => ({
   return (
     <GroupClient
       group={group}
-      members={members}
+      members={membersRaw as any}
       markets={markets ?? []}
       profile={profile}
       userId={user!.id}
