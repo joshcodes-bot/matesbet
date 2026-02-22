@@ -277,8 +277,8 @@
 
 /* Individual odds button — core Betcha pattern */
 .oddsBtn {
-  background: #14142a;
-  border: 1px solid #202038;
+  background: #1c1c35;
+  border: 1px solid #2a2a48;
   border-radius: 10px;
   padding: 10px 12px 8px;
   cursor: default;
@@ -317,7 +317,7 @@
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #8888aa;
+  color: #b0b0cc;
   margin-bottom: 5px;
   white-space: nowrap;
   overflow: hidden;
@@ -331,7 +331,7 @@
   font-family: 'DM Mono', monospace;
   font-size: 20px;
   font-weight: 600;
-  color: #c8c8e0;
+  color: #eaeaf8;
   line-height: 1;
   margin-bottom: 8px;
   transition: color 0.15s;
@@ -360,7 +360,7 @@
 .oddsBtnPct {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #3a3a55;
+  color: #7070a0;
 }
 
 /* Creator controls */
