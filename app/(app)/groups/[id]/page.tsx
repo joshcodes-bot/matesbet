@@ -28,11 +28,16 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
   if (!membership) return notFound()
 
   // Get members
-  const { data: members } = await supabase
-    .from('group_members')
-    .select('user_id, joined_at, profiles(username, balance, total_won, total_staked)')
-    .eq('group_id', params.id)
-    .order('joined_at', { ascending: true })
+  const { data: membersRaw } = await supabase
+  .from('group_members')
+  .select('user_id, joined_at, profiles(username, balance, total_won, total_staked)')
+  .eq('group_id', params.id)
+  .order('joined_at', { ascending: true })
+
+const members = (membersRaw ?? []).map(m => ({
+  ...m,
+  profiles: Array.isArray(m.profiles) ? m.profiles[0] ?? null : m.profiles as any
+}))
 
   // Get markets for this group
   const { data: markets } = await supabase
