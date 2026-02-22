@@ -56,7 +56,7 @@ const members = (membersRaw ?? []).map(m => ({
   return (
     <GroupClient
       group={group}
-      members={members ?? []}
+      members={members}
       markets={markets ?? []}
       profile={profile}
       userId={user!.id}
