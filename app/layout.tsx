@@ -12,4 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>{children}</body>
     </html>
   )
+  export const metadata: Metadata = {
+  title: 'MatesBet',
+  description: '...',
+  icons: { icon: '/favicon.ico' },
+}
 }
